@@ -1,0 +1,8 @@
+# python-template/.gitignore
+.venv/
+__pycache__/
+*.py[cod]
+.copier-answers.yml
+dist/
+.ruff_cache/
+.cache/

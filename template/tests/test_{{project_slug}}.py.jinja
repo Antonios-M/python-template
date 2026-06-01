@@ -1,0 +1,10 @@
+"""Tests for {{ project_slug }}."""
+
+import {{ project_slug }}
+
+
+def test_version() -> None:
+    """Package version is accessible."""
+    assert isinstance({{ project_slug }}.__version__, str)
+    parts = {{ project_slug }}.__version__.split(".")
+    assert len(parts) >= 2  # noqa: PLR2004

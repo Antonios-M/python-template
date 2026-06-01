@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - "CHANGELOG.md"
+      - "pyproject.toml"   # avoid re-triggering on version bump commits
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write          # for PyPI trusted publishing (optional)
+
+jobs:
+  # -------------------------------------------------------------------------
+  # 1. Determine next version without committing anything
+  # -------------------------------------------------------------------------
+  next-version:
+    name: Determine next version
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.semver.outputs.version }}
+      release_notes: ${{ steps.semver.outputs.release_notes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+
+      - name: Compute next version (dry run)
+        id: semver
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          OUTPUT=$(uv run semantic-release version --print --no-commit --no-tag --no-push 2>&1)
+          echo "version=$OUTPUT" >> "$GITHUB_OUTPUT"
+          NOTES=$(uv run semantic-release changelog --unreleased 2>/dev/null || echo "")
+          echo "release_notes<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$NOTES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+  # -------------------------------------------------------------------------
+  # 2. Open a PR that bumps the version + updates CHANGELOG
+  #    This PR, when merged, triggers the actual publish job (see job 3)
+  # -------------------------------------------------------------------------
+  open-release-pr:
+    name: Open version-bump PR
+    needs: next-version
+    if: needs.next-version.outputs.new_version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create release branch & apply version bump
+        env:
+          NEW_VERSION: ${{ needs.next-version.outputs.new_version }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          BRANCH="release/v${NEW_VERSION}"
+          git checkout -b "$BRANCH"
+          uv run semantic-release version \
+            --no-commit --no-tag --no-push
+          git add pyproject.toml CHANGELOG.md
+          git commit -m "chore(release): bump to v${NEW_VERSION}"
+          git push origin "$BRANCH"
+
+      - name: Open PR into main
+        env:
+          NEW_VERSION: ${{ needs.next-version.outputs.new_version }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          RELEASE_NOTES: ${{ needs.next-version.outputs.release_notes }}
+        run: |
+          gh pr create \
+            --base main \
+            --head "release/v${NEW_VERSION}" \
+            --title "chore(release): v${NEW_VERSION}" \
+            --body "$RELEASE_NOTES" \
+            --label "release"
+
+  # -------------------------------------------------------------------------
+  # 3. When the release PR is merged, tag + publish
+  #    Detected by: commit message starts with "chore(release):"
+  # -------------------------------------------------------------------------
+  publish:
+    name: Tag & Publish
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' &&
+      startsWith(github.event.head_commit.message, 'chore(release):')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+
+      - name: Tag release
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          uv run semantic-release version \
+            --no-bump --no-commit --tag --push
+
+      - name: Build
+        run: uv build
+
+      - name: Publish to PyPI (optional — remove if not publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Remove the 'if: false' line to enable PyPI publishing
+        if: false

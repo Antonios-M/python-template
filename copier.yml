@@ -1,0 +1,45 @@
+_subdirectory: template
+_min_copier_version: "9.0"
+
+project_name:
+  type: str
+  help: "Human-readable project name (e.g. My Awesome Library)"
+
+project_slug:
+  type: str
+  help: "Python package name / repo slug (e.g. my_awesome_library)"
+  default: "{{ project_name | lower | replace(' ', '_') | replace('-', '_') }}"
+
+project_description:
+  type: str
+  help: "One-line description of the project"
+
+author_name:
+  type: str
+  help: "Your full name"
+
+author_email:
+  type: str
+  help: "Your email address"
+
+github_username:
+  type: str
+  help: "GitHub username or org that will own this repo"
+
+python_version:
+  type: str
+  help: "Minimum Python version"
+  default: "3.12"
+  choices:
+    - "3.11"
+    - "3.12"
+    - "3.13"
+
+license:
+  type: str
+  default: "MIT"
+  choices:
+    - "MIT"
+    - "Apache-2.0"
+    - "GPL-3.0"
+    - "Proprietary"
