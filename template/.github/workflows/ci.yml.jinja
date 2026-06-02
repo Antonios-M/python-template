@@ -61,7 +61,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["{{ python_version }}", "3.13"]
+        python-version: {% if python_version == "3.13" %}["3.13"]{% else %}["{{ python_version }}", "3.13"]{% endif %}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5

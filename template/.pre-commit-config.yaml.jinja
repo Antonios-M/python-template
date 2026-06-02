@@ -7,11 +7,16 @@ repos:
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
 
-  # ty — fast type checking
-  - repo: https://github.com/astral-sh/ty
-    rev: 0.0.1-alpha.8
+  # ty — fast type checking (no published pre-commit repo yet; run the local env's ty)
+  - repo: local
     hooks:
       - id: ty-check
+        name: ty check
+        entry: uv run ty check
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
+        require_serial: true
 
   # Bandit — security
   - repo: https://github.com/PyCQA/bandit
