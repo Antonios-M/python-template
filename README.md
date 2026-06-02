@@ -36,7 +36,7 @@ A Python project template. Generate a new project with CI/CD, linting, type chec
 ## Usage
 
 ```bash
-copier copy gh:your-username/python-template my-new-project
+copier copy gh:Antonios-M/python-template my-new-project
 ```
 
 Copier will ask a few questions:
