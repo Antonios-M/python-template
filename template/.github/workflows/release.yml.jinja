@@ -1,4 +1,4 @@
-name: Release
+{% raw %}name: Release
 
 on:
   push:
@@ -135,3 +135,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         # Remove the 'if: false' line to enable PyPI publishing
         if: false
+{% endraw %}
