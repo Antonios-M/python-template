@@ -102,6 +102,14 @@ On every merge into `main`, the release workflow will:
 4. Wait for your approval, CI runs on the PR and the merge button is gated on passing checks and your review
 5. On merge: tag the commit and create a GitHub Release
 
+### Publishing to PyPI (optional)
+
+The publish job is gated by a GitHub Environment named `pypi` and disabled by default via `if: false`. To enable it:
+
+1. Create an Environment named `pypi` under **Settings → Environments** and add required reviewers.
+2. Configure [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) for the repo (the workflow already requests `id-token: write`).
+3. Remove the `if: false` line from the `Publish to PyPI` step in `.github/workflows/release.yml`.
+
 ### GH_TOKEN
 
 The release workflow opens PRs and merging the release PR re-triggers CI. You need a [Personal Access Token](https://github.com/settings/tokens?type=beta) with these permissions on the target repo:
