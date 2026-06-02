@@ -66,8 +66,9 @@ git commit -m "feat: initial commit"
 
 gh repo create my-new-project --public --source=. --push
 
-# Required for the release workflow — see Releases section below
-gh secret set GH_TOKEN --body "ghp_yourPersonalAccessToken"
+# Required for the release workflow — see Releases section below.
+# Omit --body to be prompted (avoids leaking the token to shell history).
+gh secret set GH_TOKEN
 ```
 
 ---
@@ -118,10 +119,10 @@ The release workflow opens PRs and merging the release PR re-triggers CI. You ne
 - Pull requests: Read and write
 - Workflows: Read and write
 
-Set it on each generated repo:
+Set it on each generated repo (omit `--body` to be prompted, so the token doesn't end up in shell history):
 
 ```bash
-gh secret set GH_TOKEN --body "ghp_yourToken" --repo your-username/my-new-project
+gh secret set GH_TOKEN --repo your-username/my-new-project
 ```
 
 ---
