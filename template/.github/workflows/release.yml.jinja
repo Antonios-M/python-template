@@ -95,12 +95,21 @@ jobs:
           RELEASE_NOTES: ${{ needs.next-version.outputs.release_notes }}
         run: |
           set -euo pipefail
-          gh pr create \
-            --base main \
-            --head "release/v${NEW_VERSION}" \
-            --title "chore(release): v${NEW_VERSION}" \
-            --body "$RELEASE_NOTES" \
-            --label "release"
+          BRANCH="release/v${NEW_VERSION}"
+          # Ensure the label exists (gh pr create fails on an unknown label).
+          gh label create release --description "Automated release PR" --color 0e8a16 --force >/dev/null 2>&1 || true
+          # Idempotent: if a release PR is already open for this branch, the
+          # force-push above already updated it — don't try to create a duplicate.
+          if [ -n "$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')" ]; then
+            echo "Release PR for $BRANCH already open; updated via force-push."
+          else
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore(release): v${NEW_VERSION}" \
+              --body "$RELEASE_NOTES" \
+              --label "release"
+          fi
 
   # -------------------------------------------------------------------------
   # 3. When the release PR is merged, tag + publish
