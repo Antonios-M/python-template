@@ -35,7 +35,11 @@ jobs:
           set -euo pipefail
           OUTPUT=$(uv run semantic-release version --print --no-commit --no-tag --no-push)
           echo "version=$OUTPUT" >> "$GITHUB_OUTPUT"
-          NOTES=$(uv run semantic-release changelog --unreleased)
+          # Release notes = conventional-commit subjects since the last tag.
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          RANGE="HEAD"
+          [ -n "$PREV_TAG" ] && RANGE="${PREV_TAG}..HEAD"
+          NOTES=$(git log --no-merges --pretty=format:'- %s (%h)' "$RANGE")
           {
             echo "release_notes<<EOF"
             echo "$NOTES"
