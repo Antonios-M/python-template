@@ -78,9 +78,12 @@ jobs:
         run: |
           set -euo pipefail
           BRANCH="release/v${NEW_VERSION}"
-          git checkout -b "$BRANCH"
+          # Run semantic-release on main (the only configured release branch) so
+          # it actually applies the bump + changelog, then carry the uncommitted
+          # changes onto a new release branch for the PR.
           uv run semantic-release version \
             --no-commit --no-tag --no-push
+          git checkout -b "$BRANCH"
           git add pyproject.toml CHANGELOG.md
           git commit -m "chore(release): bump to v${NEW_VERSION}"
           git push origin "$BRANCH"
