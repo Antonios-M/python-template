@@ -53,13 +53,7 @@ jobs:
           path: ~/.cache/pre-commit
           key: {% raw %}pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}{% endraw %}
       - run: uv sync --frozen
-      - name: Pre-commit hooks
-        # no-commit-to-branch is a local commit guard; it would always fail on
-        # the main checkout in CI, so skip it here (it still runs locally and
-        # main is protected server-side).
-        env:
-          SKIP: no-commit-to-branch
-        run: uv run pre-commit run --all-files
+      - run: uv run pre-commit run --all-files
 
   test:
     name: {% raw %}Test (Python ${{ matrix.python-version }}){% endraw %}
